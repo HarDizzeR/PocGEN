@@ -4,7 +4,7 @@ A Python command-line tool for generating professional security vulnerability Pr
 
 ## Features
 
-- 🛡️ **Multiple Vulnerability Types**: Supports XSS, SQL Injection, CORS, Open Redirect, and Security Headers
+- 🛡️ **Multiple Vulnerability Types**: Supports XSS, SQL Injection, CORS, Open Redirect, Security Headers, IDOR, Path Traversal, Rate Limiting, and Clickjacking
 - 📄 **Template-Based**: Uses customizable markdown templates for consistent reporting
 - 🎯 **Professional Output**: Generates detailed PoC reports with impact analysis and remediation steps
 - 📊 **Severity Classification**: Supports low, medium, high, and critical severity levels
@@ -19,6 +19,10 @@ A Python command-line tool for generating professional security vulnerability Pr
 | `cors` | Cross-Origin Resource Sharing | `--origin` |
 | `open-redirect` | Open Redirect | `--param`, `--redirect` |
 | `security-headers` | Missing Security Headers | `--headers` |
+| `idor` | Insecure Direct Object Reference | `--param`, `--payload` |
+| `path-traversal` | Path Traversal (Directory Traversal) | `--param`, `--payload` |
+| `rate-limit` | Missing Rate Limiting | `--param`, `--payload` |
+| `clickjacking` | Clickjacking (UI Redressing) | `--payload` |
 
 ## Installation
 
@@ -40,15 +44,15 @@ python pocgen.py --type <vulnerability-type> --url <target-url> --title <report-
 ```
 
 ### Required Arguments
-- `--type`: Vulnerability type (xss, sqli, cors, open-redirect, security-headers)
+- `--type`: Vulnerability type (xss, sqli, cors, open-redirect, security-headers, idor, path-traversal, rate-limit, clickjacking)
 - `--url`: Target URL
 - `--title`: Vulnerability title for the report
 - `--severity`: Severity level (low, medium, high, critical)
 - `--out`: Output filename (saved in `reports/` directory)
 
 ### Type-Specific Arguments
-- `--param`: Vulnerable parameter (required for XSS, SQLi, Open Redirect)
-- `--payload`: Exploit payload (required for XSS, SQLi)
+- `--param`: Vulnerable parameter (required for XSS, SQLi, Open Redirect, IDOR, Path Traversal, Rate Limit)
+- `--payload`: Exploit payload (required for XSS, SQLi, IDOR, Path Traversal, Rate Limit, Clickjacking)
 - `--origin`: Malicious origin (required for CORS)
 - `--redirect`: Redirect target URL (required for Open Redirect)
 - `--headers`: Comma-separated list of missing headers (for Security Headers)
@@ -80,6 +84,26 @@ python pocgen.py --type open-redirect --url "https://trusted-site.com/redirect" 
 python pocgen.py --type security-headers --url "https://webapp.company.com" --headers "Strict-Transport-Security,X-Frame-Options,Content-Security-Policy,X-Content-Type-Options" --title "Missing Critical Security Headers" --severity low --out test_headers.md
 ```
 
+### Insecure Direct Object Reference (IDOR)
+```bash
+python pocgen.py --type idor --url "https://app.example.com/user/profile" --param user_id --payload "12345" --title "IDOR in user profile access" --severity high --out poc_idor.md
+```
+
+### Path Traversal
+```bash
+python pocgen.py --type path-traversal --url "https://app.example.com/download" --param file --payload "../../../etc/passwd" --title "Path traversal in file download" --severity high --out poc_path_traversal.md
+```
+
+### Missing Rate Limiting
+```bash
+python pocgen.py --type rate-limit --url "https://app.example.com/api/login" --param username --payload "admin" --title "Missing rate limiting on login endpoint" --severity medium --out poc_rate_limit.md
+```
+
+### Clickjacking
+```bash
+python pocgen.py --type clickjacking --url "https://app.example.com/settings/delete-account" --payload "<iframe src='https://app.example.com/settings/delete-account'></iframe>" --title "Clickjacking on account deletion page" --severity medium --out poc_clickjacking.md
+```
+
 ## Output Structure
 
 Generated reports include:
@@ -96,20 +120,28 @@ Generated reports include:
 
 ```
 PocGEN/
-├── pocgen.py           # Main application
-├── README.md           # This file
-├── templates/          # Vulnerability report templates
+├── pocgen.py              # Main application
+├── README.md              # This file
+├── templates/             # Vulnerability report templates
 │   ├── xss.md
 │   ├── sqli.md
 │   ├── cors.md
 │   ├── open-redirect.md
-│   └── security-headers.md
-└── reports/            # Generated PoC reports (auto-created)
+│   ├── security-headers.md
+│   ├── idor.md            # NEW
+│   ├── path-traversal.md  # NEW
+│   ├── rate-limit.md      # NEW
+│   └── clickjacking.md    # NEW
+└── reports/               # Generated PoC reports (auto-created)
     ├── test_xss.md
     ├── test_sqli.md
     ├── test_cors.md
     ├── test_redirect.md
-    └── test_headers.md
+    ├── test_headers.md
+    ├── poc_idor.md        # NEW
+    ├── poc_path_traversal.md # NEW
+    ├── poc_rate_limit.md  # NEW
+    └── poc_clickjacking.md # NEW
 ```
 
 ## Customization
@@ -158,7 +190,9 @@ This tool is designed for legitimate security testing and educational purposes o
 
 ## Changelog
 
+- **v2.0**: Added support for IDOR, Path Traversal, Rate Limiting, and Clickjacking vulnerabilities
 - **v1.0**: Initial release with support for 5 vulnerability types
 - Template-based report generation
 - Automatic output organization
+- Comprehensive error handling
 - Comprehensive error handling
