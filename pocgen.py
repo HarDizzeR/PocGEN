@@ -8,7 +8,7 @@ from pathlib import Path
 class POCGenerator:
     def __init__(self):
         self.templates_dir = Path(__file__).parent / 'templates'
-        self.supported_types = ['xss', 'sqli', 'cors', 'open-redirect', 'security-headers']
+        self.supported_types = ['xss', 'sqli', 'cors', 'open-redirect', 'security-headers', 'idor', 'path-traversal', 'rate-limit', 'clickjacking']
     
     def _load_template(self, vuln_type):
         """Load template from file"""
@@ -55,7 +55,9 @@ class POCGenerator:
                                           .replace(' ', '%20')
                                           .replace('<', '%3C')
                                           .replace('>', '%3E')
-                                          .replace("'", '%27'))
+                                          .replace("'", '%27')
+                                          .replace('/', '%2F')
+                                          .replace('.', '%2E'))
         
         if hasattr(args, 'origin') and args.origin:
             variables['origin'] = args.origin
@@ -91,11 +93,13 @@ def main():
 Examples:
   pocgen --type xss --url "https://app.example.com/search" --param q --payload "<script>alert(1)</script>" --title "Reflected XSS in search" --severity medium --out poc_xss.md
   pocgen --type sqli --url "https://app.example.com/item" --param id --payload "' OR '1'='1' -- " --title "Potential SQLi in item id" --severity high --out poc_sqli.md
+  pocgen --type idor --url "https://app.example.com/user/profile" --param user_id --payload "12345" --title "IDOR in user profile access" --severity high --out poc_idor.md
+  pocgen --type path-traversal --url "https://app.example.com/download" --param file --payload "../../../etc/passwd" --title "Path traversal in file download" --severity high --out poc_path_traversal.md
         """
     )
     
     parser.add_argument('--type', required=True, 
-                       choices=['xss', 'sqli', 'cors', 'open-redirect', 'security-headers'],
+                       choices=['xss', 'sqli', 'cors', 'open-redirect', 'security-headers', 'idor', 'path-traversal', 'rate-limit', 'clickjacking'],
                        help='Type of vulnerability')
     parser.add_argument('--url', required=True, help='Target URL')
     parser.add_argument('--title', required=True, help='Vulnerability title')
@@ -105,8 +109,8 @@ Examples:
     parser.add_argument('--out', required=True, help='Output file name')
     
     # Type-specific arguments
-    parser.add_argument('--param', help='Vulnerable parameter (for XSS, SQLi, Open Redirect)')
-    parser.add_argument('--payload', help='Exploit payload (for XSS, SQLi)')
+    parser.add_argument('--param', help='Vulnerable parameter (for XSS, SQLi, Open Redirect, IDOR, Path Traversal, Rate Limit)')
+    parser.add_argument('--payload', help='Exploit payload (for XSS, SQLi, IDOR, Path Traversal, Rate Limit, Clickjacking)')
     parser.add_argument('--origin', help='Malicious origin (for CORS)')
     parser.add_argument('--redirect', help='Redirect target (for Open Redirect)')
     parser.add_argument('--headers', help='Missing headers comma-separated (for Security Headers)')
@@ -120,10 +124,10 @@ Examples:
         parser.error("--type, --url, --title, --severity, and --out are required for report generation")
     
     # Validate type-specific required arguments
-    if args.type in ['xss', 'sqli', 'open-redirect'] and not args.param:
+    if args.type in ['xss', 'sqli', 'open-redirect', 'idor', 'path-traversal', 'rate-limit'] and not args.param:
         parser.error(f"--param is required for {args.type}")
     
-    if args.type in ['xss', 'sqli'] and not args.payload:
+    if args.type in ['xss', 'sqli', 'idor', 'path-traversal', 'rate-limit', 'clickjacking'] and not args.payload:
         parser.error(f"--payload is required for {args.type}")
     
     if args.type == 'cors' and not args.origin:
